@@ -1,0 +1,46 @@
+{
+  "last_verified": "2026-10-18",
+  "providers": {
+    "OpenAI": {
+      "hint": "sk-...",
+      "prices": {
+        "gpt-4o-mini": [0.15, 0.6],
+        "gpt-4o": [2.5, 10.0],
+        "gpt-4.1-mini": [0.4, 1.6],
+        "gpt-4.1": [2.0, 8.0]
+      }
+    },
+    "Cohere": {
+      "hint": "Cohere API key",
+      "prices": {
+        "command-r7b-12-2024": [0.0375, 0.15],
+        "command-r-08-2024": [0.15, 0.6],
+        "command-r-plus-08-2024": [2.5, 10.0],
+        "command-a-03-2025": [2.5, 10.0]
+      }
+    },
+    "OpenRouter": {
+      "hint": "sk-or-...",
+      "prices": {
+        "openai/gpt-4o-mini": [0.15, 0.6],
+        "google/gemini-2.5-flash": [0.3, 2.5]
+      }
+    },
+    "Anthropic": {
+      "hint": "sk-ant-...",
+      "prices": {
+        "claude-haiku-5-5": [null, null],
+        "claude-sonnet-5-5": [null, null],
+        "claude-opus-5-5": [null, null]
+      }
+    },
+    "Google Gemini": {
+      "hint": "AIza...",
+      "prices": {
+        "gemini-2.5-flash-lite": [0.1, 0.4],
+        "gemini-2.5-flash": [0.3, 2.5],
+        "gemini-2.5-pro": [1.25, 10.0]
+      }
+    }
+  }
+}
