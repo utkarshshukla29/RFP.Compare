@@ -11,6 +11,17 @@ SAMPLE_PDFS = PROJECT_ROOT / "sampleRFPs"
 
 
 def make_supplier(filename: str, name: str, submitted: str, experience: float) -> dict:
+    """Build a supplier input dictionary from a checked-in sample PDF.
+
+    Args:
+        filename: PDF filename under sampleRFPs.
+        name: Supplier display name.
+        submitted: Submission date in ISO format.
+        experience: Historical experience rating from 0 to 10.
+
+    Returns:
+        Supplier input dictionary including the PDF's bytes.
+    """
     return {
         "supplier_name": name,
         "submission_date": submitted,
@@ -21,6 +32,14 @@ def make_supplier(filename: str, name: str, submitted: str, experience: float) -
 
 
 def test_mock_batch_persists_complete_run_and_never_exports_key(tmp_path):
+    """Verify mock batch evaluation is persisted without storing credentials.
+
+    Args:
+        tmp_path: Pytest temporary directory for the isolated run database.
+
+    Returns:
+        None. Assertions check completion, ranking, persistence, and key exclusion.
+    """
     suppliers = [
         make_supplier("01_Apex_Health_Systems_RFP_Response.pdf", "Apex Health Systems", "2026-09-12", 8),
         make_supplier("03_NexaWorks_Medical_RFP_Response.pdf", "NexaWorks Medical", "2026-09-12", 8),
@@ -43,6 +62,14 @@ def test_mock_batch_persists_complete_run_and_never_exports_key(tmp_path):
 
 
 def test_failed_supplier_does_not_abort_batch(tmp_path):
+    """Verify an unreadable supplier is reported while valid suppliers complete.
+
+    Args:
+        tmp_path: Pytest temporary directory for the isolated run database.
+
+    Returns:
+        None. Assertions check partial success and supplier-specific warnings.
+    """
     suppliers = [
         make_supplier("01_Apex_Health_Systems_RFP_Response.pdf", "Apex Health Systems", "2026-09-12", 8),
         {"supplier_name": "Unreadable", "submission_date": "2026-09-13", "experience_rating": 5,

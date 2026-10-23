@@ -9,6 +9,16 @@ SYSTEM_PROMPT = """You are an evidence-grounded RFP proposal evaluator. Score on
 
 
 def build_prompt(criteria: list[Criterion], supplier_name: str, document_text: str) -> tuple[str, str]:
+    """Build system and user prompts for one evidence-grounded evaluation.
+
+    Args:
+        criteria: Active scoring criteria, including IDs and score limits.
+        supplier_name: User-provided supplier name.
+        document_text: Extracted text from the supplier PDF.
+
+    Returns:
+        A (system prompt, user prompt) tuple.
+    """
     criteria_block = "\n".join(
         f"Criterion {item.criterion_id}: {item.name} | max_score {item.max_score:g} | inspect: {item.description}"
         for item in criteria
@@ -26,6 +36,20 @@ def build_prompt(criteria: list[Criterion], supplier_name: str, document_text: s
 
 
 def evaluate_supplier(client: LLMClient, criteria: list[Criterion], supplier_name: str, document_text: str) -> str:
+    """Request and structurally validate one supplier's JSON evaluation.
+
+    Args:
+        client: LLM client implementing complete_json.
+        criteria: Active criteria whose IDs must occur in the response.
+        supplier_name: User-provided supplier name included in the prompt.
+        document_text: Extracted supplier document text used as evidence.
+
+    Returns:
+        Raw model JSON, or normalized JSON when a criterion name maps to an ID.
+
+    Raises:
+        ValueError: If three responses fail JSON or criterion identity validation.
+    """
     system, user = build_prompt(criteria, supplier_name, document_text)
     last_error: Exception | None = None
     for attempt in range(3):

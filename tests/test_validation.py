@@ -11,6 +11,14 @@ CRITERIA = [
 
 
 def test_validation_normalizes_scores_and_warns_for_corrections():
+    """Verify malformed or out-of-range fields are normalized with warnings.
+
+    Args:
+        None.
+
+    Returns:
+        None. Assertions check name override, clipping, defaults, and warnings.
+    """
     raw = json.dumps({
         "supplier_name": "wrong name",
         "criteria": [
@@ -29,6 +37,14 @@ def test_validation_normalizes_scores_and_warns_for_corrections():
 
 
 def test_validation_strips_fences_and_inserts_missing_criterion():
+    """Verify fenced JSON is parsed and omitted active criteria are inserted.
+
+    Args:
+        None.
+
+    Returns:
+        None. Assertions check scorecard entries and corresponding warnings.
+    """
     raw = '''```json\n{"criteria":[{"criterion_id":1,"score":6,"justification":"Fits","evidence":"FHIR support"}],"risks":[],"overall_summary":"OK"}\n```'''
     card = validate_and_normalize(raw, CRITERIA, "Supplier One")
     assert [entry.score for entry in card.criteria] == [6, 0]
@@ -37,6 +53,14 @@ def test_validation_strips_fences_and_inserts_missing_criterion():
 
 
 def test_invalid_json_raises_controlled_error():
+    """Verify invalid JSON is rejected with a controlled ValueError.
+
+    Args:
+        None.
+
+    Returns:
+        None. Raises AssertionError if invalid input is accepted.
+    """
     try:
         validate_and_normalize("not json", CRITERIA, "Supplier One")
     except ValueError as error:

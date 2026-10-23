@@ -50,6 +50,14 @@ class RankingResult:
 
 
 def to_dict(value: Any) -> Any:
+    """Recursively convert dataclasses and containers to plain values.
+
+    Args:
+        value: Dataclass instance, list, dictionary, or scalar to convert.
+
+    Returns:
+        Converted nested structure; scalar values pass through unchanged.
+    """
     if hasattr(value, "__dataclass_fields__"):
         return asdict(value)
     if isinstance(value, list):

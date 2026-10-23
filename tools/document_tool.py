@@ -15,6 +15,18 @@ MAX_DOCUMENT_CHARACTERS = 120_000
 
 
 def extract_text(pdf_bytes: bytes, supplier_name: str = "") -> DocumentText:
+    """Extract selectable text and metadata from a supplier PDF.
+
+    Args:
+        pdf_bytes: Complete uploaded PDF file contents.
+        supplier_name: Optional name attached to truncation warnings.
+
+    Returns:
+        DocumentText with extracted text, counts, and warnings.
+
+    Raises:
+        ValueError: If the file is empty, unreadable, or has no selectable text.
+    """
     if not pdf_bytes:
         raise ValueError("The uploaded PDF is empty.")
     try:

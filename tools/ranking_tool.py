@@ -10,6 +10,20 @@ def compute_ranking(
     criteria: list[Criterion],
     supplier_metadata: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
+    """Calculate weighted scores, benchmarks, PPI, tie-breaks, and ranks.
+
+    Args:
+        scorecards: Validated criterion scorecards for successful suppliers.
+        criteria: Active criteria defining score limits and original weights.
+        supplier_metadata: Mapping from supplier name to date and experience rating.
+
+    Returns:
+        Dictionary with leaderboard, supplier details, warnings, tie-break notes,
+        and the normalized criteria snapshot.
+
+    Raises:
+        ValueError: If criteria are empty or their total weight is not positive.
+    """
     if not criteria:
         raise ValueError("There are no active evaluation criteria.")
 
@@ -100,6 +114,14 @@ def compute_ranking(
 
 
 def _explain_tie_breaks(suppliers: list[dict[str, Any]]) -> list[str]:
+    """Describe adjacent ranking pairs whose PPIs tie at four decimals.
+
+    Args:
+        suppliers: Supplier result dictionaries already sorted by final rank.
+
+    Returns:
+        Human-readable notes for ties resolved by date, experience, or name.
+    """
     notes = []
     for higher, lower in zip(suppliers, suppliers[1:]):
         if round(higher["ppi"], 4) != round(lower["ppi"], 4):

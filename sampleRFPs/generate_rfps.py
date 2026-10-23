@@ -27,6 +27,17 @@ CELLB = ParagraphStyle("cellb", parent=CELL, fontName="Helvetica-Bold")
 
 
 def table(header, rows, widths, total_row=False):
+    """Build a styled ReportLab table flowable for a PDF document.
+
+    Args:
+        header: Column heading values.
+        rows: Table body rows, each containing one value per column.
+        widths: Column widths measured in centimeters.
+        total_row: Whether to shade the final row as a total.
+
+    Returns:
+        Configured ReportLab Table flowable.
+    """
     data = [[Paragraph(str(h), CELLB) for h in header]]
     for r in rows:
         data.append([Paragraph(str(c), CELL) for c in r])
@@ -44,12 +55,41 @@ def table(header, rows, widths, total_row=False):
 
 
 def bullets(items):
+    """Build a bulleted list flowable from paragraph strings.
+
+    Args:
+        items: Text for each bullet item.
+
+    Returns:
+        ReportLab ListFlowable containing the requested bullets.
+    """
     return ListFlowable([ListItem(Paragraph(i, BODY), leftIndent=12) for i in items],
                         bulletType="bullet", start="-", leftIndent=12)
 
 
 def render(filename, title, subtitle, blocks, footer_label):
+    """Render structured content blocks as a paginated synthetic PDF.
+
+    Args:
+        filename: Output PDF filename within the sampleRFPs directory.
+        title: Main document title.
+        subtitle: Subtitle shown below the title.
+        blocks: Sequence of heading, paragraph, bullet, or table block tuples.
+        footer_label: Organization label printed in each page footer and metadata.
+
+    Returns:
+        None. Writes the PDF to disk.
+    """
     def on_page(canvas, doc):
+        """Draw the fictional-use label and page number on a PDF page.
+
+        Args:
+            canvas: ReportLab canvas for the page being rendered.
+            doc: Document template containing the current page number.
+
+        Returns:
+            None. Draws footer text directly on the canvas.
+        """
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(colors.HexColor("#666666"))
@@ -76,6 +116,15 @@ def render(filename, title, subtitle, blocks, footer_label):
 
 
 def price_block(items, assumptions):
+    """Build reusable commercial pricing content and calculate its total.
+
+    Args:
+        items: (label, INR-lakh amount, pricing basis) tuples.
+        assumptions: List of pricing assumptions to render as bullets.
+
+    Returns:
+        Pair of (document block list, total price in INR lakh).
+    """
     total = sum(a for _, a, _ in items)
     rows = [[l, f"{a:,}", n] for l, a, n in items]
     rows.append(["<b>Total 5-year cost</b>", f"<b>{total:,}</b>", f"<b>= INR {total / 100:.2f} crore</b>"])
@@ -90,6 +139,14 @@ def price_block(items, assumptions):
 # 0. The procurement request (common to all suppliers)
 # ----------------------------------------------------------------------------------------
 def build_request():
+    """Generate the synthetic buyer request PDF shared by all suppliers.
+
+    Args:
+        None.
+
+    Returns:
+        None. Writes the RFP request PDF to the sampleRFPs directory.
+    """
     blocks = [
         ("h", "1. Background"),
         ("p", "Meridian Care Hospitals (MCH) is a fictional network of four multi-specialty hospitals with "
@@ -143,6 +200,14 @@ def build_request():
 # 1. Apex Health Systems - strong technical + security, higher price, moderate schedule
 # ----------------------------------------------------------------------------------------
 def build_apex():
+    """Generate the fictional Apex Health Systems proposal PDF.
+
+    Args:
+        None.
+
+    Returns:
+        Total five-year price in INR lakh.
+    """
     price, total = price_block([
         ("Platform subscription (5 years)", 620, "Per-bed tiered licence, 1,200 beds, includes patient portal"),
         ("Implementation and configuration", 310, "Fixed price, 11-month programme"),
@@ -215,6 +280,14 @@ def build_apex():
 # 2. BrightPath HealthTech - lowest price, fast timeline, weak compliance, limited experience
 # ----------------------------------------------------------------------------------------
 def build_brightpath():
+    """Generate the fictional BrightPath HealthTech proposal PDF.
+
+    Args:
+        None.
+
+    Returns:
+        Total five-year price in INR lakh.
+    """
     price, total = price_block([
         ("Platform subscription (5 years)", 400, "Flat SaaS fee, includes patient portal"),
         ("Implementation and configuration", 190, "Fixed price, 6-month programme"),
@@ -267,6 +340,14 @@ def build_brightpath():
 # 3. NexaWorks Medical - balanced, strongest implementation plan and support model
 # ----------------------------------------------------------------------------------------
 def build_nexa():
+    """Generate the fictional NexaWorks Medical proposal PDF.
+
+    Args:
+        None.
+
+    Returns:
+        Total five-year price in INR lakh.
+    """
     price, total = price_block([
         ("Platform subscription (5 years)", 510, "Per-bed licence, 1,200 beds, includes patient portal"),
         ("Implementation and configuration", 270, "Fixed price, 9-month programme"),
@@ -343,6 +424,14 @@ def build_nexa():
 # 4. Orbit Digital Health - strong experience, vague integration plan, medium price
 # ----------------------------------------------------------------------------------------
 def build_orbit():
+    """Generate the fictional Orbit Digital Health proposal PDF.
+
+    Args:
+        None.
+
+    Returns:
+        Total five-year price in INR lakh.
+    """
     price, total = price_block([
         ("Platform subscription (5 years)", 540, "Per-bed licence, 1,200 beds"),
         ("Implementation and configuration", 280, "Fixed price, 10-month programme"),
@@ -407,6 +496,14 @@ def build_orbit():
 # 5. Zenith MedSoft - deliberately incomplete (edge-case test: missing sections and evidence)
 # ----------------------------------------------------------------------------------------
 def build_zenith():
+    """Generate the deliberately incomplete fictional Zenith proposal PDF.
+
+    Args:
+        None.
+
+    Returns:
+        None. Writes the incomplete proposal PDF to the sampleRFPs directory.
+    """
     blocks = [
         ("h", "1. Executive summary"),
         ("p", "Zenith MedSoft is a growing healthcare software company. We are pleased to respond to the MCH RFP and believe our "

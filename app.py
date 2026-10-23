@@ -22,15 +22,42 @@ EST_IN_TOK, EST_OUT_TOK = 6000, 1500  # rough tokens per supplier evaluation (do
 
 
 def row(model, pin=None, pout=None, ctx=None):
+    """Build a model table row with optional prices and context size.
+
+    Args:
+        model: Provider model identifier.
+        pin: Input price per million tokens, or None when unknown.
+        pout: Output price per million tokens, or None when unknown.
+        ctx: Context-window size, or None when unknown.
+
+    Returns:
+        Dictionary with model, input, output, and context fields.
+    """
     return {"model": model, "input": pin, "output": pout, "context": ctx}
 
 
 def fallback_models(provider):
+    """Read built-in model and price rows for a provider.
+
+    Args:
+        provider: Provider name present in the local model catalogue.
+
+    Returns:
+        List of model-row dictionaries; raises KeyError for an unknown provider.
+    """
     return [row(model, *prices) for model, prices in CATALOG[provider]["prices"].items()]
 
 
 def fetch_models(provider, key):
-    """Validate the key by listing models. Returns (rows, error_message). The key is never echoed."""
+    """Validate provider credentials and retrieve available model rows.
+
+    Args:
+        provider: Provider name whose model-list endpoint should be queried.
+        key: Provider API key; it is never included in returned data or errors.
+
+    Returns:
+        Pair of (model rows, error message); on failure rows is empty.
+    """
     prices = CATALOG[provider]["prices"]
     price = lambda m: prices.get(m, (None, None))
     try:
@@ -106,6 +133,14 @@ ss.setdefault("api_key_input", default_api_key)
 
 
 def reset_llm():  # provider changed -> everything downstream is invalid
+    """Clear selected models and results after the provider changes.
+
+    Args:
+        None.
+
+    Returns:
+        None. Updates Streamlit session state in place.
+    """
     ss.models, ss.chosen, ss.run_result, ss.api_key_input = None, None, None, ""
 
 
@@ -248,6 +283,16 @@ with tabs["Supplier input"]:
         progress_bar = st.progress(0, text="Preparing evaluation...")
 
         def update_progress(current, total_suppliers, supplier_name):
+            """Update the progress widget for the supplier being evaluated.
+
+            Args:
+                current: One-based index of the supplier being evaluated.
+                total_suppliers: Number of suppliers in the batch.
+                supplier_name: Supplier name shown in the progress message.
+
+            Returns:
+                None. Updates the Streamlit progress widget in place.
+            """
             progress_bar.progress(current / total_suppliers, text=f"Evaluating {supplier_name} ({current}/{total_suppliers})")
 
         try:

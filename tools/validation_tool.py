@@ -7,6 +7,19 @@ from models.schemas import Criterion, ScoreEntry, ValidatedScorecard
 
 
 def validate_and_normalize(raw: str, criteria: list[Criterion], supplier_name: str) -> ValidatedScorecard:
+    """Parse model JSON and normalize its scores against active criteria.
+
+    Args:
+        raw: Raw model JSON response, optionally wrapped in Markdown fences.
+        criteria: Active criteria defining valid IDs and authoritative score maxima.
+        supplier_name: User-entered supplier name, preferred over model output.
+
+    Returns:
+        ValidatedScorecard with one normalized entry per criterion and warnings.
+
+    Raises:
+        ValueError: If the response is invalid JSON or not a JSON object.
+    """
     warnings: list[dict[str, Any]] = []
     cleaned = raw.strip()
     fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", cleaned, flags=re.IGNORECASE | re.DOTALL)
@@ -87,6 +100,17 @@ def validate_and_normalize(raw: str, criteria: list[Criterion], supplier_name: s
 
 
 def _number(value: Any, supplier_name: str, criterion: Criterion, warnings: list[dict[str, Any]]) -> float:
+    """Parse a finite numeric score or default it to zero with a warning.
+
+    Args:
+        value: Model-returned score.
+        supplier_name: Supplier associated with any warning.
+        criterion: Criterion associated with this score.
+        warnings: Mutable list receiving a warning for invalid values.
+
+    Returns:
+        Finite float score, or 0.0 when parsing fails.
+    """
     number = _number_or_none(value)
     if number is None:
         warnings.append(_warning(supplier_name, criterion.criterion_id, "SCORE_DEFAULTED", "Non-numeric, null, or non-finite score was set to zero."))
@@ -95,6 +119,14 @@ def _number(value: Any, supplier_name: str, criterion: Criterion, warnings: list
 
 
 def _number_or_none(value: Any) -> float | None:
+    """Convert a non-boolean finite numeric value to float when possible.
+
+    Args:
+        value: Value to parse.
+
+    Returns:
+        Finite float, or None for booleans, invalid, or non-finite values.
+    """
     if isinstance(value, bool):
         return None
     try:
@@ -106,6 +138,18 @@ def _number_or_none(value: Any) -> float | None:
 
 def _text(value: Any, supplier_name: str, criterion: Criterion, field_name: str,
           warnings: list[dict[str, Any]]) -> str:
+    """Normalize model-provided text and warn when the value is missing.
+
+    Args:
+        value: Model-returned text value.
+        supplier_name: Supplier associated with any warning.
+        criterion: Criterion associated with this text.
+        field_name: Field label included in a missing-value warning.
+        warnings: Mutable list receiving a warning when value is None.
+
+    Returns:
+        Stripped text, or an empty string when the value is None.
+    """
     if value is None:
         warnings.append(_warning(supplier_name, criterion.criterion_id, "TEXT_MISSING", f"Missing {field_name}; no evidence provided."))
         return ""
@@ -113,4 +157,15 @@ def _text(value: Any, supplier_name: str, criterion: Criterion, field_name: str,
 
 
 def _warning(supplier: str, criterion_id: int | None, code: str, message: str) -> dict[str, Any]:
+    """Create a standardized scorecard validation warning dictionary.
+
+    Args:
+        supplier: Supplier associated with the warning.
+        criterion_id: Related criterion ID, or None for a scorecard warning.
+        code: Stable machine-readable warning code.
+        message: Human-readable explanation.
+
+    Returns:
+        Dictionary containing supplier, criterion_id, code, and message.
+    """
     return {"supplier": supplier, "criterion_id": criterion_id, "code": code, "message": message}

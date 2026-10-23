@@ -31,6 +31,23 @@ def run_batch(
     db_path: str | Path | None = None,
     progress_callback: Callable[[int, int, str], None] | None = None,
 ) -> dict[str, Any]:
+    """Evaluate, rank, and persist a batch of supplier submissions.
+
+    Args:
+        suppliers: SupplierInput objects or dictionaries with equivalent fields.
+        llm_client: Client used to obtain criterion scores.
+        provider: LLM provider label persisted with the run.
+        model: LLM model identifier persisted with the run.
+        pricing: Optional selected input/output prices to snapshot.
+        db_path: Optional SQLite path; None uses the project database.
+        progress_callback: Optional callback receiving index, total, and supplier name.
+
+    Returns:
+        Run result dictionary with status, warnings, leaderboard, and scorecards.
+
+    Raises:
+        ValueError: If batch-level supplier input validation fails before run creation.
+    """
     _validate_inputs(suppliers)
     pricing_snapshot = {
         key: pricing[key]
@@ -101,6 +118,14 @@ def run_batch(
 
 
 def _validate_inputs(suppliers: list[SupplierInput | dict[str, Any]]) -> None:
+    """Validate supplier names, dates, ratings, filenames, and PDF bytes.
+
+    Args:
+        suppliers: Supplier objects or dictionaries to validate.
+
+    Returns:
+        None. Raises ValueError with the first detected input problem.
+    """
     if not suppliers:
         raise ValueError("Upload at least one supplier PDF to evaluate.")
     names = set()
@@ -123,6 +148,14 @@ def _validate_inputs(suppliers: list[SupplierInput | dict[str, Any]]) -> None:
 
 
 def _coerce_supplier(value: SupplierInput | dict[str, Any]) -> SupplierInput:
+    """Convert a supplier dictionary to SupplierInput when needed.
+
+    Args:
+        value: Existing SupplierInput or a dictionary of supplier fields.
+
+    Returns:
+        A SupplierInput instance.
+    """
     if isinstance(value, SupplierInput):
         return value
     return SupplierInput(
@@ -147,6 +180,24 @@ def _run_payload(
     leaderboard: list[dict[str, Any]],
     suppliers: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    """Assemble the JSON-ready top-level payload for an evaluation run.
+
+    Args:
+        run_id: Unique run identifier.
+        created_at: ISO-8601 creation timestamp.
+        status: Run status to store.
+        provider: LLM provider label.
+        model: LLM model identifier.
+        pricing: Selected pricing snapshot.
+        criteria: Criteria snapshot used for ranking.
+        warnings: Run-level and supplier-level warnings.
+        tie_break_notes: Explanations for ranking tie-breaks.
+        leaderboard: Ranked summary rows.
+        suppliers: Full supplier scorecards, defaulting to an empty list.
+
+    Returns:
+        Dictionary containing run metadata and evaluation results.
+    """
     return {
         "rfp_run_id": run_id,
         "created_at": created_at,
@@ -161,4 +212,14 @@ def _run_payload(
 
 
 def _warning(supplier: str | None, code: str, message: str) -> dict[str, Any]:
+    """Create a standardized warning record for a run.
+
+    Args:
+        supplier: Affected supplier name, or None for a run-level warning.
+        code: Stable machine-readable warning code.
+        message: Human-readable explanation.
+
+    Returns:
+        Warning dictionary with supplier, criterion_id, code, and message fields.
+    """
     return {"supplier": supplier, "criterion_id": None, "code": code, "message": message}

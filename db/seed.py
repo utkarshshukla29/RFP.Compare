@@ -38,6 +38,14 @@ CRITERIA = [
 
 
 def seed_database(db_path: str | Path | None = None) -> None:
+    """Initialize the database and seed defaults only when criteria are absent.
+
+    Args:
+        db_path: Optional SQLite file path; None selects the project default.
+
+    Returns:
+        None. The operation is idempotent and closes its connection afterward.
+    """
     from db.repository import get_connection
 
     connection = get_connection(db_path)

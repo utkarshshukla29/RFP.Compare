@@ -6,6 +6,15 @@ class MockLLMClient:
     """Deterministic demo client; produces illustrative scores and quotes only source text."""
 
     def complete_json(self, system: str, user: str) -> str:
+        """Generate illustrative scores using criteria and text from the prompt.
+
+        Args:
+            system: System instruction retained for interface compatibility.
+            user: Prompt containing criteria, supplier, and document text.
+
+        Returns:
+            JSON string with criterion scores and illustrative explanations.
+        """
         criteria_block = user.split("ACTIVE CRITERIA:\n", 1)[-1].split("\n\nSUPPLIER NAME:", 1)[0]
         supplier_name = user.split("SUPPLIER NAME:\n", 1)[-1].split("\n\nSUPPLIER DOCUMENT", 1)[0].strip()
         document = user.split("SUPPLIER DOCUMENT TEXT:\n", 1)[-1]
