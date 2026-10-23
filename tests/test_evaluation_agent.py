@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from agents.evaluation_agent import evaluate_supplier
+from agents.evaluation_agent import build_prompt, evaluate_supplier
 from models.schemas import Criterion
 
 
@@ -34,6 +34,22 @@ class SequenceClient:
         """
         self.calls += 1
         return next(self.responses)
+
+
+def test_prompt_requires_risks_and_overall_summary():
+    """Verify the model prompt requires both top-level summary fields.
+
+    Args:
+        None.
+
+    Returns:
+        None. Assertions check the output contract and empty-risk instruction.
+    """
+    system, user = build_prompt(CRITERIA, "Supplier", "Evidence text")
+    prompt = f"{system}\n{user}"
+    assert "'risks'" in prompt
+    assert "'overall_summary'" in prompt
+    assert "empty array" in prompt
 
 
 def test_retries_structurally_empty_json_then_accepts_score():
