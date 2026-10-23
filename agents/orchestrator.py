@@ -40,7 +40,7 @@ def run_batch(
         model: LLM model identifier persisted with the run.
         pricing: Optional selected input/output prices to snapshot.
         db_path: Optional SQLite path; None uses the project database.
-        progress_callback: Optional callback receiving index, total, and supplier name.
+        progress_callback: Optional callback called after each supplier finishes, receiving index, total, and name.
 
     Returns:
         Run result dictionary with status, warnings, leaderboard, and scorecards.
@@ -72,8 +72,6 @@ def run_batch(
     try:
         for index, raw_supplier in enumerate(suppliers, start=1):
             supplier = _coerce_supplier(raw_supplier)
-            if progress_callback:
-                progress_callback(index, total, supplier.supplier_name)
             try:
                 if not criteria:
                     raise ValueError("No active criteria are configured; activate at least one criterion.")
@@ -94,6 +92,9 @@ def run_batch(
                 warnings.extend(scorecard.warnings)
             except Exception as error:
                 warnings.append(_warning(supplier.supplier_name, "SUPPLIER_FAILED", str(error)))
+            finally:
+                if progress_callback:
+                    progress_callback(index, total, supplier.supplier_name)
 
         if not scorecards:
             result = _run_payload(run_id, created_at, "FAILED", provider, model, pricing_snapshot, [], warnings, [], [])

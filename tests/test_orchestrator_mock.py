@@ -79,3 +79,44 @@ def test_failed_supplier_does_not_abort_batch(tmp_path):
     assert result["status"] == "COMPLETED"
     assert len(result["leaderboard"]) == 1
     assert any(warning["supplier"] == "Unreadable" for warning in result["warnings"])
+
+
+def test_progress_callback_runs_after_each_supplier_evaluation(tmp_path):
+    """Verify progress advances only after each supplier's model request returns.
+
+    Args:
+        tmp_path: Pytest temporary directory for the isolated run database.
+
+    Returns:
+        None. Assertions check callback ordering and completed supplier indices.
+    """
+    events = []
+
+    class RecordingClient:
+        def __init__(self):
+            self.client = MockLLMClient()
+
+        def complete_json(self, system, user):
+            events.append("evaluation_finished")
+            return self.client.complete_json(system, user)
+
+    suppliers = [
+        make_supplier("01_Apex_Health_Systems_RFP_Response.pdf", "Apex Health Systems", "2026-09-12", 8),
+        make_supplier("03_NexaWorks_Medical_RFP_Response.pdf", "NexaWorks Medical", "2026-09-12", 8),
+    ]
+
+    def record_progress(current, total, supplier_name):
+        events.append(("progress", current, total, supplier_name))
+
+    result = run_batch(
+        suppliers, RecordingClient(), "Demo", "mock", db_path=tmp_path / "progress.sqlite3",
+        progress_callback=record_progress,
+    )
+
+    assert result["status"] == "COMPLETED"
+    assert events == [
+        "evaluation_finished",
+        ("progress", 1, 2, "Apex Health Systems"),
+        "evaluation_finished",
+        ("progress", 2, 2, "NexaWorks Medical"),
+    ]

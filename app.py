@@ -283,7 +283,7 @@ with tabs["Supplier input"]:
         progress_bar = st.progress(0, text="Preparing evaluation...")
 
         def update_progress(current, total_suppliers, supplier_name):
-            """Update the progress widget for the supplier being evaluated.
+            """Update the progress widget after a supplier evaluation finishes.
 
             Args:
                 current: One-based index of the supplier being evaluated.
@@ -293,7 +293,7 @@ with tabs["Supplier input"]:
             Returns:
                 None. Updates the Streamlit progress widget in place.
             """
-            progress_bar.progress(current / total_suppliers, text=f"Evaluating {supplier_name} ({current}/{total_suppliers})")
+            progress_bar.progress(current / total_suppliers, text=f"Completed {supplier_name} ({current}/{total_suppliers})")
 
         try:
             result = run_batch(
