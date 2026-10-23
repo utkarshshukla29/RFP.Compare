@@ -1,4 +1,5 @@
 import json
+import re
 
 from llm.base import LLMClient
 from models.schemas import Criterion
@@ -28,7 +29,11 @@ def evaluate_supplier(client: LLMClient, criteria: list[Criterion], supplier_nam
     for attempt in range(3):
         try:
             raw = client.complete_json(system, user)
-            payload = json.loads(raw.strip().removeprefix("```json").removesuffix("```").strip())
+            cleaned = raw.strip()
+            fenced = re.fullmatch(r"```(?:[A-Za-z0-9_-]+)?\s*(.*?)\s*```", cleaned, flags=re.DOTALL)
+            if fenced:
+                cleaned = fenced.group(1)
+            payload = json.loads(cleaned)
             if not isinstance(payload, dict):
                 raise ValueError("The response must be a JSON object.")
             entries = payload.get("criteria")
@@ -56,4 +61,4 @@ def evaluate_supplier(client: LLMClient, criteria: list[Criterion], supplier_nam
                     + ". Return a JSON object with a non-empty 'criteria' array. Each entry must include criterion_id, "
                     "score, max_score, justification, and evidence. Score every listed active criterion."
                 )
-    raise ValueError("The model returned invalid evaluation output after three attempts.") from last_error
+    raise ValueError(f"The model returned invalid evaluation output after three attempts: {last_error}") from last_error
