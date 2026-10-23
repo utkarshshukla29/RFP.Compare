@@ -38,6 +38,20 @@ def test_accepts_json_inside_markdown_fences(fence):
     assert client.calls == 1
 
 
+@pytest.mark.parametrize("identity", [
+    {"criterion_id": "Technical"},
+    {"criterion_name": " technical "},
+    {"criterion": "Technical"},
+])
+def test_maps_criterion_name_to_active_id(identity):
+    response = {"criteria": [{**identity, "score": 7, "max_score": 10,
+                              "justification": "Reason", "evidence": "Quote"}]}
+    client = SequenceClient([json.dumps(response)])
+    normalized = json.loads(evaluate_supplier(client, CRITERIA, "Supplier", "Evidence text"))
+    assert normalized["criteria"][0]["criterion_id"] == 1
+    assert client.calls == 1
+
+
 def test_fails_after_three_structurally_empty_responses():
     client = SequenceClient(['{"criteria":[]}', '{"error":"model unavailable"}', '{}'])
     with pytest.raises(ValueError, match="invalid evaluation output"):

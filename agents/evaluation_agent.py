@@ -15,7 +15,9 @@ def build_prompt(criteria: list[Criterion], supplier_name: str, document_text: s
     )
     user = (
         "Evaluate this one supplier against every active criterion. Scores must be within each listed max_score. "
-        "Use only document evidence and output one result for every criterion_id.\n\n"
+        "Use only document evidence and output one result for every criterion_id. Use the numeric criterion_id "
+        "shown in the list, not the criterion name. Each result must have this shape: "
+        '{"criterion_id": 1, "score": 0, "max_score": 10, "justification": "...", "evidence": "..."}.\n\n'
         f"ACTIVE CRITERIA:\n{criteria_block}\n\n"
         f"SUPPLIER NAME:\n{supplier_name}\n\n"
         f"SUPPLIER DOCUMENT TEXT:\n{document_text}"
@@ -40,19 +42,32 @@ def evaluate_supplier(client: LLMClient, criteria: list[Criterion], supplier_nam
             if not isinstance(entries, list):
                 raise ValueError("The response must contain a criteria list.")
             expected_ids = {criterion.criterion_id for criterion in criteria}
+            ids_by_name = {" ".join(criterion.name.casefold().split()): criterion.criterion_id
+                           for criterion in criteria}
             returned_ids = set()
+            normalized = False
             for entry in entries:
                 if not isinstance(entry, dict):
                     continue
                 try:
                     criterion_id = int(entry.get("criterion_id"))
                 except (TypeError, ValueError, OverflowError):
-                    continue
+                    criterion_id = None
+                if criterion_id not in expected_ids:
+                    labels = (entry.get("criterion_id"), entry.get("criterion_name"),
+                              entry.get("criterion"), entry.get("name"))
+                    criterion_id = next((ids_by_name[" ".join(label.casefold().split())]
+                                         for label in labels
+                                         if isinstance(label, str)
+                                         and " ".join(label.casefold().split()) in ids_by_name), None)
+                    if criterion_id is not None:
+                        entry["criterion_id"] = criterion_id
+                        normalized = True
                 if criterion_id in expected_ids:
                     returned_ids.add(criterion_id)
             if not returned_ids:
-                raise ValueError("The response did not score any active criterion.")
-            return raw
+                raise ValueError(f"The response did not score any active criterion (expected IDs: {sorted(expected_ids)}).")
+            return json.dumps(payload) if normalized else raw
         except (json.JSONDecodeError, TypeError, ValueError) as error:
             last_error = error
             if attempt < 2:

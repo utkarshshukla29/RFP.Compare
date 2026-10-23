@@ -283,21 +283,39 @@ if has_completed_run:
         selected = next(item for item in result["suppliers"] if item["supplier_name"] == selected_name)
         st.metric("Absolute weighted score", f"{selected['absolute_score']:.2f}")
         st.metric("Peer Performance Index", f"{selected['ppi']:.2f}")
-        st.dataframe(pd.DataFrame(selected["criteria"]), hide_index=True, width="stretch", column_config={
-            "score": st.column_config.NumberColumn("Score", format="%.2f"),
-            "max_score": st.column_config.NumberColumn("Max", format="%.2f"),
-            "benchmark": st.column_config.NumberColumn("Benchmark", format="%.2f"),
-            "gap": st.column_config.NumberColumn("Gap", format="%.2f"),
-            "relative_pct": st.column_config.NumberColumn("Relative %", format="%.2f"),
-            "weight": st.column_config.NumberColumn("Weight %", format="%.2f"),
-            "weighted_contribution": st.column_config.NumberColumn("Contribution", format="%.2f"),
-        })
-        for criterion_result in selected["criteria"]:
-            with st.expander(criterion_result["name"]):
-                st.markdown("**Justification**")
-                st.write(criterion_result["justification"] or "No justification returned.")
-                st.markdown("**Evidence**")
-                st.write(criterion_result["evidence"] or "No evidence returned.")
+        st.markdown("""
+        <style>
+        @media (max-width: 768px) {
+            .st-key-criterion_response_grid .stHorizontalBlock {
+                flex-direction: column;
+                gap: 0 !important;
+            }
+            .st-key-criterion_response_grid .stHorizontalBlock > div {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        with st.container(key="criterion_response_grid"):
+            for criterion_result in selected["criteria"]:
+                with st.container(border=True):
+                    st.subheader(criterion_result["name"])
+                    st.caption(
+                        f"Score {criterion_result['score']:.2f} / {criterion_result['max_score']:.2f}  ·  "
+                        f"Benchmark {criterion_result['benchmark']:.2f}  ·  "
+                        f"Gap {criterion_result['gap']:.2f}  ·  "
+                        f"Relative {criterion_result['relative_pct']:.2f}%  ·  "
+                        f"Weight {criterion_result['weight']:.2f}%  ·  "
+                        f"Contribution {criterion_result['weighted_contribution']:.2f}"
+                    )
+                    justification_col, evidence_col = st.columns(2)
+                    with justification_col:
+                        st.markdown("**Justification**")
+                        st.write(criterion_result["justification"] or "No justification returned.")
+                    with evidence_col:
+                        st.markdown("**Evidence**")
+                        st.write(criterion_result["evidence"] or "No evidence returned.")
         st.markdown("**Overall summary**")
         st.write(selected["overall_summary"] or "No summary returned.")
         if selected["risks"]:
